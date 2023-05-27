@@ -55,38 +55,100 @@ def origine(texte):
     if redacteurs=="":
         qui="Echec"
     else:
-        qui=redacteurs
-    return qui
+        if "Gouvernement" in redacteurs[0]:
+            qui="Gouvernement"
+        else:
+            qui="Parlementaires"
+    ou=tab_texte[1]
+    return redacteurs,qui, ou
+
+def contenu(texte):
+    redaction=""
+    expose=""
+    i=1
+    j=i
+    # Cherche les marqueurs de début de REDACTION et de début d'EXPOSE
+    trouve_redac=False
+    while ("----------" not in texte[i] and i<len(texte)-1):
+        i+=1
+    if "----------" in texte[i]:
+        trouve_redac=True
+        j=i
+    else:
+        j=0
+        trouve_redac=False
+    trouve_expo=False
+    while ("EXPOSÉ SOMMAIRE" not in texte[j] and j<len(texte)-1):
+        j+=1
+    if "EXPOSÉ SOMMAIRE" in texte[j]:
+        trouve_expo=True
+    else:
+        trouve_expo=False
+    # Tire les conséquences en terme de texte des marqueurs trouvés ou non
+    if trouve_redac and trouve_expo:
+        redaction=texte[i+1:j-1]
+        expose=texte[j+1:len(texte)]
+        print("Rédaction complète")
+    elif (not trouve_expo and not trouve_redac):
+        print("Aucun marqueur")
+        expose=texte[1:len(texte)]
+        redaction=""
+    elif (trouve_expo and not trouve_redac):
+        print("Cas expo vrai et redac faux")
+        if j!=1:
+            redaction=texte[1:j-1]
+        else:
+            redaction=""
+        expose=texte[j+1:len(texte)]
+    elif (not trouve_expo and trouve_redac):
+        redaction=texte[i:len(texte)]
+        expose=""
+    return redaction, expose
+
+def dossier(texte):
+    dos=""
+    i=3
+    while "Commission" not in texte[i] and i<5: # Les noms de loi ne font pas plus de 3 lignes
+        i+=1
+    for j in texte[3:i]:
+        dos=dos+" "+j
+    return dos
 
 def strip_amend(texte):
-    tab_texte=texte.partition("\n")
-    #print(tab_texte)
+    tab_texte=texte.split("\n")
+    print(tab_texte)
     # print("Cela donne ceci:\n {}".format(tab_texte[0]))
     # Dans tous les cas
     page,npage=recupere_page(texte)
     noamendement=recupere_amend(tab_texte[0])
-    auteurs=origine(texte)
-    if (auteurs=="Echec" and npage==2 and page==2):
+    redac,exp=contenu(tab_texte)
+    print(redac)
+    print(exp)
+    if (npage==2 and page==2):
         print("Page 2 de l'amendement précédent")
+        datedep=""
+        pos=""
+        auteurs=""
+        entite=""
+        lieu_depot=""
+        loi=""
     else: # C'est une première page
+        print("Page 1")
+        auteurs, entite, lieu_depot=origine(texte)
         pos=position(texte)
         datedep=tab_texte[2]
-        print("Les auteurs: {}".format(auteurs))
-    """print("Amendement n°{}, en date du {}, position:{}, lieu dépôt:{}, origine:{},".format(noamendement,date,position,lieu_depot,origine_deposant))"""
+        loi=dossier(tab_texte)
+    return noamendement,page,npage,lieu_depot,entite,auteurs, datedep, pos,loi ,redac,exp
     
-    
-
-
-
-
 fich="LPM_amendement_RH_seancepublique.pdf"
 pdf=PdfReader(fich)
-nouveau=PdfMerger()
-j=1
+npages=len(pdf.pages)
+print(npages)
+j=0
 for i in pdf.pages:
-    strip_amend(i.extract_text())
+    k=strip_amend(i.extract_text())
     j+=1
-    if j==10:
-        break
-
-
+    if j==208:
+        print(k)
+        for r in k:
+            print(r)
