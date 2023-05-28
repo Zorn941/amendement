@@ -1,5 +1,5 @@
-from PyPDF2 import PdfReader, PdfWriter, PdfMerger
-import os
+from PyPDF2 import PdfReader
+import os,sys
 
 def recupere_amend(texte):
     ligne=texte.partition('\n')
@@ -103,6 +103,7 @@ def contenu(texte):
     elif (not trouve_expo and trouve_redac):
         redaction=texte[i:len(texte)]
         expose=""
+    print(type(redaction)," ",type(expose))
     return redaction, expose
 
 def dossier(texte):
@@ -139,16 +140,46 @@ def strip_amend(texte):
         datedep=tab_texte[2]
         loi=dossier(tab_texte)
     return noamendement,page,npage,lieu_depot,entite,auteurs, datedep, pos,loi ,redac,exp
+
+def t_convert(stripped):
+    conv=""
+    for i in stripped:
+        conv=conv+i+" "
+    conv=conv[:-1]
+    return conv
     
-fich="LPM_amendement_RH_seancepublique.pdf"
+
+def conversion(stripped):
+    conv=""
+    for i in stripped:
+        conv=conv+str(i)+";"
+    conv=conv[:-1]
+    return conv
+
+print(sys.argv[1])
+f=open("digest"+sys.argv[1][:-4]+".txt","w")
+fich=sys.argv[1]
 pdf=PdfReader(fich)
 npages=len(pdf.pages)
 print(npages)
-j=0
+las_red=""
+las_exp=""
+last=[]
 for i in pdf.pages:
-    k=strip_amend(i.extract_text())
-    j+=1
-    if j==208:
-        print(k)
-        for r in k:
-            print(r)
+    k=list(strip_amend(i.extract_text()))
+    if last==[]:
+        last=k
+        print(k[9])
+        las_red=t_convert(k[9])
+        las_exp=t_convert(k[10])
+    elif last[0]==k[0]:
+        las_red=las_red+t_convert(k[9])
+        las_exp=las_exp+t_convert(k[10])
+        last[9]=las_red
+        last[10]=las_exp
+        f.write(conversion(last)+"\n")
+    else:
+        if k[1]!=2:
+            f.write(conversion(k)+"\n")
+            last=k
+f.close()
