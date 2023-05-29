@@ -127,7 +127,7 @@ def dossier(ttexte): # Version avec Sénat en paramètre à faire
         else:
             if i<j:
                 dos=ttexte[i+1:j]
-                if ("2023" in dos[0]):
+                if ("2023" in dos[0]): # Peu élégant à corriger
                     dos.pop(0)
                     dos=t_convert(dos)
                 else:
@@ -135,6 +135,22 @@ def dossier(ttexte): # Version avec Sénat en paramètre à faire
             else:
                 dos=""
     return dos
+
+def depose_le(ttexte):
+    # Recherche une ligne contenant un mois puis isole le jour et l'année
+    mois={"janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"}
+    date_depot=""
+    trouve=False
+    for i in ttexte:
+        l=i.split(" ")
+        for j in l:
+            if j in mois:
+                date_depot=l[l.index(j)-1]+" "+j+" "+l[l.index(j)+1]
+                trouve=True
+        if trouve:
+            break
+    print(date_depot)
+    return date_depot
 
 def strip_amend(texte):
     tab_texte=texte.split("\n")
@@ -152,7 +168,7 @@ def strip_amend(texte):
     else: # C'est une première page
         auteurs, entite, lieu_depot=origine(texte)
         pos=position(texte)
-        datedep=tab_texte[2]
+        datedep=depose_le(tab_texte)
         loi=dossier(tab_texte)
     return noamendement,page,npage,lieu_depot,entite,auteurs, datedep, pos,loi ,redac,exp
 
@@ -180,7 +196,7 @@ las_exp=""
 last=[]
 for i in pdf.pages:
     k=list(strip_amend(i.extract_text()))
-    if k[0]=="562":
+    if k[0]=="209":
         print(i.extract_text())
         print(k)
     if last==[]:
