@@ -106,18 +106,34 @@ def contenu(texte):
         redaction=redaction.replace("2/2","")
     if "----------" in redaction:
         redaction=redaction[0:10].replace("-","")+redaction[11:]
-        print(redaction)
     if "2/2" in expose:
         expose=expose.replace("2/2","")
     return redaction, expose
 
-def dossier(texte):
+def dossier(ttexte): # Version avec Sénat en paramètre à faire
     dos=""
-    i=3
-    while "Commission" not in texte[i] and i<5: # Les noms de loi ne font pas plus de 3 lignes
+    i=0
+    trouve=False
+    while ("ASSEMBLÉE NATIONALE" not in ttexte[i] and i<len(ttexte)-1):
         i+=1
-    for j in texte[3:i]:
-        dos=dos+" "+j
+    if i==len(ttexte):
+        dos=""
+    else:
+        j=i
+        while ("Commission" not in ttexte[j] and j<len(ttexte)-1):
+            j+=1
+        if j==len(ttexte):
+            dos=""
+        else:
+            if i<j:
+                dos=ttexte[i+1:j]
+                if ("2023" in dos[0]):
+                    dos.pop(0)
+                    dos=t_convert(dos)
+                else:
+                    dos=t_convert(dos)
+            else:
+                dos=""
     return dos
 
 def strip_amend(texte):
@@ -155,7 +171,6 @@ def conversion(stripped):
     conv=conv[:-1]
     return conv
 
-print(sys.argv[1])
 f=open("digest_"+sys.argv[1][:-4]+".csv","w")
 fich=sys.argv[1]
 pdf=PdfReader(fich)
@@ -165,6 +180,9 @@ las_exp=""
 last=[]
 for i in pdf.pages:
     k=list(strip_amend(i.extract_text()))
+    if k[0]=="562":
+        print(i.extract_text())
+        print(k)
     if last==[]:
         last=k
         las_red=t_convert(k[9])
@@ -174,9 +192,6 @@ for i in pdf.pages:
         las_exp=las_exp+t_convert(k[10])
         last[9]=las_red
         last[10]=las_exp
-        if k[0]=="1134":
-            print(i.extract_text())
-            print(k)
         f.write(conversion(last)+"\n")
     else:
         if k[1]!=2:
